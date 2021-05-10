@@ -18,20 +18,29 @@ domain = get_command_line_argument
 # https://www.rubydoc.info/stdlib/core/IO:readlines
 dns_raw = File.readlines("zone")
 
+
 def parse_dns(dns_raw)
-  dns_records = []
-  dns_raw.each{ |dns|  
-    dns_records.push(dns.strip.split(", ")) if(dns[0] == "A"  || dns[0] == "C") 
+  dns_records = { 
+    type: [], 
+    source: [],
+    destination: [] 
+  }
+  dns_raw.map!{ | dns | dns.strip.split(", ")
+  }.filter!{ | dns |
+      dns.each.with_index{ | record, index |
+        dns_records[dns_records.keys[index]].push(record)
+      } if (dns[0] == "A" || dns[0] == "CNAME")
   }
   return dns_records
 end
 
+
 def resolve(dns_records , lookup_chain , domain)
-  dns_records.each { |dns|
-    if(dns[0] == "A" && dns[1] == domain)
-      return lookup_chain.push(dns[2])
-    elsif(dns[1] == domain)
-      return resolve(dns_records, lookup_chain.push(dns[2]), dns[2])
+  dns_records[:destination].each.with_index { |dns , index|
+    if(dns_records[:type][index] == "A" && dns_records[:source][index] == domain)
+      return lookup_chain.push(dns)
+    elsif(dns_records[:source][index] == domain)
+      return resolve(dns_records, lookup_chain.push(dns), dns)
     end
   }
   print "Error: record not found for "
