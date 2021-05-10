@@ -21,9 +21,9 @@ dns_raw = File.readlines("zone")
 
 def parse_dns(dns_raw)
   dns_records = { 
-    type: [], 
-    source: [],
-    destination: [] 
+    :type => [], 
+    :source => [],
+    :destination => [] 
   }
   dns_raw.map!{ | dns | dns.strip.split(", ")
   }.filter!{ | dns |
