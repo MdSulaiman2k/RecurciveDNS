@@ -25,8 +25,9 @@ def parse_dns(dns_raw)
     :source => [],
     :destination => [] 
   }
+  # the map! function was iterate the dns_raw and split and store the return value in dns_raw
   dns_raw.map!{ | dns | dns.strip.split(", ")
-  }.filter!{ | dns |
+  }.filter!{ | dns | # filter fun is used to filter when 1st index is "A" or CNAME 
       dns.each.with_index{ | record, index |
         dns_records[dns_records.keys[index]].push(record)
       } if (dns[0] == "A" || dns[0] == "CNAME")
