@@ -18,7 +18,6 @@ domain = get_command_line_argument
 # https://www.rubydoc.info/stdlib/core/IO:readlines
 dns_raw = File.readlines("zone")
 
-
 def parse_dns(dns_raw)
   dns_records = { 
     :type => [], 
@@ -27,7 +26,7 @@ def parse_dns(dns_raw)
   }
   # the map! function was iterate the dns_raw and split and store the return value in dns_raw
   dns_raw.map!{ | dns | dns.strip.split(", ")
-  }.filter!{ | dns | # filter fun is used to filter when 1st index is "A" or CNAME 
+  }.filter!{ | dns | # filter! fun is used to filter when 1st index is "A" or CNAME 
       dns.each.with_index{ | record, index |
         dns_records[dns_records.keys[index]].push(record)
       } if (dns[0] == "A" || dns[0] == "CNAME")
@@ -35,8 +34,9 @@ def parse_dns(dns_raw)
   return dns_records
 end
 
-
+# it is recursive function it will returns the array of destination chain 
 def resolve(dns_records , lookup_chain , domain)
+  # iterates the dns_records of destination array
   dns_records[:destination].each.with_index { |dns , index|
     if(dns_records[:type][index] == "A" && dns_records[:source][index] == domain)
       return lookup_chain.push(dns)
@@ -44,6 +44,7 @@ def resolve(dns_records , lookup_chain , domain)
       return resolve(dns_records, lookup_chain.push(dns), dns)
     end
   }
+  # if the domain is invalid then print this and return lookup_chain 
   print "Error: record not found for "
   return lookup_chain
 end
