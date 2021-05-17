@@ -18,36 +18,35 @@ domain = get_command_line_argument
 # https://www.rubydoc.info/stdlib/core/IO:readlines
 dns_raw = File.readlines("zone")
 
-def parse_dns(dns_raw)
-  dns_records = {
-    :type => [],
-    :source => [],
-    :destination => [],
-  }
-  # the map! function was iterate the dns_raw and split and store the return value in dns_raw
-  dns_raw.map! { |dns|
-    dns.strip.split(", ")
-  }.filter! { |dns| # filter! fun is used to filter when 1st index is "A" or CNAME
-    dns.each.with_index { |record, index|
-      dns_records[dns_records.keys[index]].push(record)
-    } if (dns[0] == "A" || dns[0] == "CNAME")
-  }
-  return dns_records
+# This function returns hashes of records in zone file
+def parse_dns(raw)
+  raw.
+    reject { |line| line.empty? }.
+    map { |line| line.strip.split(", ") }.
+    reject { |record| record.length < 3 }.
+    each_with_object({}) do |record, records|
+    records[record[1]] = {
+      type: record[0],
+      target: record[2],
+    }
+  end
 end
 
 # it is recursive function it will returns the array of destination chain
 def resolve(dns_records, lookup_chain, domain)
-  # iterates the dns_records of destination array
-  dns_records[:destination].each.with_index { |dns, index|
-    if (dns_records[:type][index] == "A" && dns_records[:source][index] == domain)
-      return lookup_chain.push(dns)
-    elsif (dns_records[:source][index] == domain)
-      return resolve(dns_records, lookup_chain.push(dns), dns)
-    end
-  }
-  # if the domain is invalid then print this and return lookup_chain
-  print "Error: record not found for "
-  return lookup_chain
+  record = dns_records[domain]
+  if (!record)
+    lookup_chain[0] = "Error: Record not found for " + domain
+    return lookup_chain
+  elsif record[:type] == "CNAME"
+    lookup_chain << record[:target]
+    return resolve(dns_records, lookup_chain, record[:target])
+  elsif record[:type] == "A"
+    return lookup_chain << record[:target]
+  else
+    lookup_chain << "Invalid record type for " + domain
+    return
+  end
 end
 
 # To complete the assignment, implement `parse_dns` and `resolve`.
