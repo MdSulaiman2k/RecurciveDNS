@@ -21,7 +21,7 @@ dns_raw = File.readlines("zone")
 # This function returns hashes of records in zone file
 def parse_dns(raw)
   raw.
-    reject { |line| line.empty? }.
+    reject { |line| line.empty? or line[0] == "#" }.
     map { |line| line.strip.split(", ") }.
     reject { |record| record.length < 3 }.
     each_with_object({}) do |record, records|
